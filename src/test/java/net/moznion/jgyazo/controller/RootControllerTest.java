@@ -50,4 +50,29 @@ public class RootControllerTest extends ControllerTestBase {
         .execute();
     assertEquals(400, result.getResponse().getStatusLine().getStatusCode());
   }
+
+  @Test
+  public void getImageShouldBeSuccessful() throws URISyntaxException, IOException {
+    // post file
+    getMech()
+        .postMultipart("/")
+        .addBinaryBody("imagedata",
+            new File(this.getClass().getClassLoader().getResource("lena.jpg").toURI()))
+        .execute();
+
+    final Mech2Result result =
+        getMech()
+            .get("/3444d453367af67e18dd20f99cdb4d90397a1fa9.jpg")
+            .execute();
+    assertEquals(200, result.getResponse().getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void getImageShouldBeNotFound() throws URISyntaxException, IOException {
+    final Mech2Result result =
+        getMech()
+            .get("/3444d453367af67e18dd20f99cdb4d90397a1fa9.jpg")
+            .execute();
+    assertEquals(404, result.getResponse().getStatusLine().getStatusCode());
+  }
 }
