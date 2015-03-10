@@ -1,52 +1,53 @@
 package net.moznion.jgyazo.controller;
 
-import me.geso.mech2.Mech2;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import me.geso.mech2.Mech2Result;
-import me.geso.mech2.Mech2WithBase;
-import org.apache.catalina.Globals;
-import org.apache.catalina.LifecycleException;
-import org.apache.catalina.startup.Tomcat;
-import org.junit.After;
+
+import net.moznion.jgyazo.ConfigLoader;
+
+import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.servlet.ServletException;
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Paths;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+public class RootControllerTest extends ControllerTestBase {
+  private static File imageDir = new File(ConfigLoader.getConfig().getImageDir());
 
-public class RootControllerTest {
-    private Mech2WithBase mech;
-    private Tomcat tomcat;
+  @Before
+  public void initializeImageDirectory() throws IOException {
+    FileUtils.deleteDirectory(imageDir);
+    imageDir.mkdir();
+  }
 
-    @Before
-    public void before() throws ServletException, LifecycleException, URISyntaxException {
-        this.tomcat = new Tomcat();
-        tomcat.setPort(0);
-        org.apache.catalina.Context webContext = tomcat.addWebapp("/", new File("src/main/webapp").getAbsolutePath());
-        webContext.getServletContext().setAttribute(Globals.ALT_DD_ATTR, "src/main/webapp/WEB-INF/web.xml");
-        tomcat.start();
+  @Test
+  public void postingImageShuoldBeSuccessful() throws IOException, URISyntaxException {
+    final Mech2Result result =
+        getMech()
+            .postMultipart("/")
+            .addBinaryBody("imagedata",
+                new File(this.getClass().getClassLoader().getResource("lena.jpg").toURI()))
+            .execute();
 
-        int port = tomcat.getConnector().getLocalPort();
-        String url = "http://127.0.0.1:" + port;
-        this.mech = new Mech2WithBase(Mech2.builder().build(), new URI(url));
-    }
+    assertEquals(200, result.getResponse().getStatusLine().getStatusCode());
+    assertEquals("{\"file_name\":\"3444d453367af67e18dd20f99cdb4d90397a1fa9.jpg\"}",
+        result.getResponseBodyAsString());
 
-    @After
-    public void after() throws Exception {
-        if (this.tomcat != null) {
-            this.tomcat.stop();
-        }
-    }
+    long fileSize =
+        Paths.get(imageDir.getPath(), "3444d453367af67e18dd20f99cdb4d90397a1fa9.jpg").toFile()
+            .length();
+    assertTrue(fileSize > 0);
+  }
 
-    @Test
-    public void testRoot() throws IOException, URISyntaxException {
-        final Mech2Result result = mech.get("/").execute();
-        assertEquals(200, result.getResponse().getStatusLine().getStatusCode());
-        assertTrue(result.getResponseBodyAsString().contains("Hello"));
-    }
+  @Test
+  public void postingImageWithoutEntity() throws URISyntaxException, IOException {
+    final Mech2Result result = getMech()
+        .postMultipart("/")
+        .execute();
+    assertEquals(400, result.getResponse().getStatusLine().getStatusCode());
+  }
 }
