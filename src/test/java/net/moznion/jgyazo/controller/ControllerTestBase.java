@@ -3,47 +3,47 @@ package net.moznion.jgyazo.controller;
 import me.geso.mech2.Mech2;
 import me.geso.mech2.Mech2WithBase;
 
-import org.apache.catalina.Globals;
-import org.apache.catalina.LifecycleException;
-import org.apache.catalina.startup.Tomcat;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.webapp.WebAppContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-import java.io.File;
-import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
-
-import javax.servlet.ServletException;
 
 public abstract class ControllerTestBase {
-    private static Tomcat tomcat;
-    private static Mech2WithBase mech;
+  private static Mech2WithBase mech;
+  private static Server jetty;
 
-    @BeforeClass
-    public static void beforeClass() throws ServletException, LifecycleException, URISyntaxException, IOException {
-        ControllerTestBase.tomcat = new Tomcat();
-        tomcat.setPort(0);
-        org.apache.catalina.Context webContext = tomcat.addWebapp("/", new File("src/main/webapp").getAbsolutePath());
-        webContext.getServletContext().setAttribute(Globals.ALT_DD_ATTR, "src/main/webapp/WEB-INF/web.xml");
-        tomcat.start();
+  @BeforeClass
+  public static void beforeClass() throws Exception {
+    jetty = new Server(0);
 
-        int port = tomcat.getConnector().getLocalPort();
-        String url = "http://127.0.0.1:" + port;
-        ControllerTestBase.mech = new Mech2WithBase(Mech2.builder().build(), new URI(url));
-    }
+    WebAppContext context = new WebAppContext();
+    context.setResourceBase(".");
+    context.setDescriptor("src/main/webapp/WEB-INF/web.xml");
+    context.setContextPath("/");
+    context.setParentLoaderPriority(true);
+    jetty.setHandler(context);
+    jetty.setStopAtShutdown(true);
+    jetty.start();
 
-    @AfterClass
-    public static void afterClass() throws ServletException, LifecycleException, URISyntaxException {
-        ControllerTestBase.tomcat.stop();
-        ControllerTestBase.tomcat.destroy();
-    }
+    ServerConnector connector = (ServerConnector) jetty.getConnectors()[0];
+    int port = connector.getLocalPort();
+    String url = "http://127.0.0.1:" + port;
+    ControllerTestBase.mech = new Mech2WithBase(Mech2.builder().build(), new URI(url));
+  }
 
-    public Mech2WithBase getMech() {
-        return ControllerTestBase.mech;
-    }
+  @AfterClass
+  public static void afterClass() throws Exception {
+    jetty.stop();
+  }
 
-    public Tomcat getTomcat() {
-        return ControllerTestBase.tomcat;
-    }
+  public Mech2WithBase getMech() {
+    return ControllerTestBase.mech;
+  }
+
+  public Server getJetty() {
+    return ControllerTestBase.jetty;
+  }
 }

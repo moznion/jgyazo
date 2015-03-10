@@ -2,7 +2,6 @@ package net.moznion.jgyazo.controller;
 
 import com.google.common.collect.ImmutableMap;
 
-import freemarker.template.TemplateException;
 import me.geso.avans.annotation.GET;
 import me.geso.avans.annotation.POST;
 import me.geso.avans.annotation.PathParam;
@@ -22,11 +21,12 @@ import javax.servlet.http.Part;
 
 public class RootController extends BaseController {
   @POST("/")
-  public WebResponse postImage()
-      throws IOException, TemplateException, NoSuchAlgorithmException, IllegalStateException,
-      ServletException {
-    Part uploadedImage = this.getServletRequest().getPart("imagedata");
-    if (uploadedImage == null) {
+  public WebResponse postImage() throws ServletException, NoSuchAlgorithmException, IOException {
+    Part uploadedImage = null;
+    try {
+      uploadedImage = this.getServletRequest().getPart("imagedata");
+    } catch (IOException e) {
+      // Probably if reach here, intended part is not contained
       return this.renderJSON(400, new StringAPIResponse(
           "Must attach an image through a part `imagedata` of multipart"));
     }

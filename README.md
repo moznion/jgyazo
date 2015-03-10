@@ -4,7 +4,7 @@ jgyazo
 Start the server
 ----------------
 
-    mvn tomcat7:run
+    mvn -Djgyazo.env=local jetty:run
 
 Creating war file
 -----------------
