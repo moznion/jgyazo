@@ -2,20 +2,13 @@ package net.moznion.jgyazo.controller;
 
 import me.geso.avans.ControllerBase;
 import me.geso.avans.trigger.ResponseFilter;
-import net.moznion.jgyazo.ConfigLoader;
-import net.moznion.jgyazo.view.FreemarkerView;
-import net.moznion.jgyazo.view.FreemarkerViewFactory;
 import me.geso.webscrew.response.WebResponse;
 
-public abstract class BaseController extends ControllerBase {
-	private static FreemarkerViewFactory freemarkerViewFactory = new FreemarkerViewFactory();
+import net.moznion.jgyazo.ConfigLoader;
 
+public abstract class BaseController extends ControllerBase {
 	public static boolean isDevelopment() {
 		return ConfigLoader.getConfig().isDevelopment();
-	}
-
-	public FreemarkerView freemarker(String templatePath) {
-		return BaseController.freemarkerViewFactory.create(templatePath, this);
 	}
 
 	@ResponseFilter
